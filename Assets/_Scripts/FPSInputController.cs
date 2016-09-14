@@ -10,11 +10,40 @@ public class FPSInputController : MonoBehaviour
 {
 	private CharacterMotor motor;
 	public bool checkAutoWalk = false;
-	
+
+	private bool MFI_Connected = false;
+	IEnumerator CheckForControllers()
+	{
+		while (true)
+		{
+			string[] controllers = Input.GetJoystickNames();
+
+			if (!MFI_Connected && controllers.Length > 0)
+			{
+				MFI_Connected = true;
+				Debug.Log("Connected");
+				GameObject.FindWithTag("CONTROL_PAD").SetActive(false);
+				GameObject.FindWithTag("CONTROL_FIRE").SetActive(false);
+
+			}
+			else if (MFI_Connected && controllers.Length == 0)
+			{
+				MFI_Connected = false;
+				Debug.Log("Disconnected");
+				GameObject.FindWithTag("CONTROL_PAD").SetActive(true);
+				GameObject.FindWithTag("CONTROL_FIRE").SetActive(true);
+
+			}
+			yield return new WaitForSeconds(1f);
+		}
+	}
+
 	// Use this for initialization
 	void Awake()
 	{
 		motor = GetComponent<CharacterMotor>();
+		StartCoroutine(CheckForControllers());
+
 	}
 	
 	// Update is called once per frame
@@ -49,5 +78,9 @@ public class FPSInputController : MonoBehaviour
 		// Apply the direction to the CharacterMotor
 		motor.inputMoveDirection = transform.rotation * directionVector;
 		motor.inputJump = Input.GetButton("Jump");
+
+		if (Input.GetButton("Fire1")) {
+			Debug.Log ("PRESSED!!!");
+		};
 	}
 }
