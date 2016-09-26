@@ -49,7 +49,8 @@ public class FPSInputController : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		// Get the input vector from keyboard or analog stick
+		// Set forward direction toward camera
+		transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, Camera.main.transform.localEulerAngles.y, transform.localEulerAngles.z); 		// Get the input vector from keyboard or analog stick
 		Vector3 directionVector;
 		if (!checkAutoWalk) { 
 			directionVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
