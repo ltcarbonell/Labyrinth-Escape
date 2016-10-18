@@ -10,6 +10,7 @@ public class FPSInputController : MonoBehaviour
 {
 	private CharacterMotor motor;
 	public bool checkAutoWalk = false;
+	private GameObject head;
 
 	private bool MFI_Connected = false;
 	IEnumerator CheckForControllers()
@@ -43,14 +44,17 @@ public class FPSInputController : MonoBehaviour
 	{
 		motor = GetComponent<CharacterMotor>();
 		StartCoroutine(CheckForControllers());
+		head = GameObject.FindWithTag ("GvrHead");
 
 	}
 	
 	// Update is called once per frame
 	void Update()
 	{
+		
 		// Set forward direction toward camera
-		transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, Camera.main.transform.localEulerAngles.y, transform.localEulerAngles.z); 		// Get the input vector from keyboard or analog stick
+//		transform.eulerAngles.y = head.transform.rotation.y; 		// Get the input vector from keyboard or analog stick
+		Debug.Log(head.transform.localEulerAngles.y);
 		Vector3 directionVector;
 		if (!checkAutoWalk) { 
 			directionVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
@@ -77,7 +81,7 @@ public class FPSInputController : MonoBehaviour
 		}
 		
 		// Apply the direction to the CharacterMotor
-		motor.inputMoveDirection = transform.rotation * directionVector;
+		motor.inputMoveDirection = head.transform.rotation * directionVector;
 		motor.inputJump = Input.GetButton("Jump");
 
 		if (Input.GetButton("Fire1")) {
