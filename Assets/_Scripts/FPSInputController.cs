@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -11,6 +12,10 @@ public class FPSInputController : MonoBehaviour
 	private CharacterMotor motor;
 	public bool checkAutoWalk = false;
 	private GameObject head;
+
+	public Text timerText;
+	float timeLeft;
+
 
 	private bool MFI_Connected = false;
 	IEnumerator CheckForControllers()
@@ -45,6 +50,8 @@ public class FPSInputController : MonoBehaviour
 		motor = GetComponent<CharacterMotor>();
 		StartCoroutine(CheckForControllers());
 		head = GameObject.FindWithTag ("GvrHead");
+
+		StartGame ();
 
 	}
 	
@@ -87,5 +94,49 @@ public class FPSInputController : MonoBehaviour
 		if (Input.GetButton("Fire1")) {
 			Debug.Log ("PRESSED!!!");
 		};
+
+		RunTimer ();
 	}
+
+	void GameOver()
+	{
+		
+	}
+
+	void StartGame()
+	{
+		timeLeft = 60.0f;
+	}
+
+	void SetTimerText()
+	{
+		int timeLeftSeconds = (int)timeLeft;
+		timerText.text = timeLeftSeconds.ToString ();
+		if (timeLeft > 30) {
+			timerText.material.color = Color.green;
+		} else if (timeLeft > 15) {
+			timerText.material.color = Color.yellow;
+		} else {
+			timerText.material.color = Color.red;
+		}
+	}
+
+	void RunTimer ()
+	{
+		timeLeft -= Time.deltaTime;
+		SetTimerText ();
+		if(timeLeft < 0)
+		{
+			GameOver();
+		}
+	}
+
+
+
+	void IncreaseTimer(float incrementBy) {
+		timeLeft += incrementBy;
+		SetTimerText ();
+
+	}
+
 }
