@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 
@@ -7,7 +7,7 @@ public class GameController : MonoBehaviour {
 	public bool isGameOver;
 	public Text scoreTxt;
 	public Text VRScoreTxt;
-  public Text gameOverTxt;
+	public Text gameOverTxt;
 	public Canvas gameOverCanvas;
 	public Canvas VRGameOverCanvas;
 	public Text VRGameOverTxt;
@@ -22,7 +22,7 @@ public class GameController : MonoBehaviour {
 	void NewGame() {
 		ResetGame();
 	}
-	
+
 
 	/// <summary>
 	/// Got an enemy! Increment the score and see if we win.
@@ -35,31 +35,31 @@ public class GameController : MonoBehaviour {
 			GameOver(true);
 		}
 	}
-	
+
 	/// <summary>
-	/// Game's over. 
+	/// Game's over.
 	/// </summary>
-	/// <param name="didIWin">Did the playeer win?</param>	
+	/// <param name="didIWin">Did the playeer win?</param>
 	public void GameOver(bool didIWin) {
-    isGameOver = true;
-    _didIWin = didIWin;
-    string finalTxt = (_didIWin) ? "You won!" : "Too bad";
-    if (GvrViewer.Instance.VRModeEnabled) {
-    	Debug.Log("Game is over. I am showing the VR Canvas");
-        VRGameOverCanvas.enabled = true;
-        VRGameOverTxt.text = finalTxt;
-    } else {
-        gameOverCanvas.enabled = true;
-        gameOverTxt.text = finalTxt;
-    }
+		isGameOver = true;
+		_didIWin = didIWin;
+		string finalTxt = (_didIWin) ? "You won!" : "Too bad";
+		if (GvrViewer.Instance.VRModeEnabled) {
+			Debug.Log("Game is over. I am showing the VR Canvas");
+			VRGameOverCanvas.enabled = true;
+			VRGameOverTxt.text = finalTxt;
+		} else {
+			gameOverCanvas.enabled = true;
+			gameOverTxt.text = finalTxt;
+		}
 	}
-	
+
 	public void RefreshGameOver() {
-    gameOverCanvas.enabled = false;
-    VRGameOverCanvas.enabled = false;
-    if (isGameOver) {
-        GameOver(_didIWin);
-    }
+		gameOverCanvas.enabled = false;
+		VRGameOverCanvas.enabled = false;
+		if (isGameOver) {
+			GameOver(_didIWin);
+		}
 	}
 
 	/// <summary>
@@ -75,20 +75,20 @@ public class GameController : MonoBehaviour {
 		scoreTxt.text = "--";
 		VRScoreTxt.text = "--";
 
-        // Remove any remaining game objects
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        foreach (GameObject enemy in enemies) {
-        	Destroy(enemy);
-        }
-        
-        GameObject[] ninjaStars = GameObject.FindGameObjectsWithTag("NinjaStar");
-        foreach (GameObject ninjaStar in ninjaStars) {
-        	Destroy (ninjaStar);
-        }
+		// Remove any remaining game objects
+		GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+		foreach (GameObject enemy in enemies) {
+			Destroy(enemy);
+		}
+
+		GameObject[] ninjaStars = GameObject.FindGameObjectsWithTag("NinjaStar");
+		foreach (GameObject ninjaStar in ninjaStars) {
+			Destroy (ninjaStar);
+		}
 	}
-	
+
 	void Start () {
 		NewGame();
 	}
-	
+
 }
