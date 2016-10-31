@@ -20,8 +20,6 @@ public class FPSInputController : MonoBehaviour
 	Scene currentScene;
 	bool isGameActive = false;
 
-	public GamePlayMenu gameplayMenu;
-
 
 	private bool MFI_Connected = false;
 	IEnumerator CheckForControllers()
