@@ -108,6 +108,14 @@ public class FPSInputController : MonoBehaviour
 
 	}
 
+	void OnTriggerEnter(Collider other)
+	{
+		if (other.gameObject.CompareTag("TimePowerUp")){
+			other.gameObject.SetActive(false);
+		}
+		IncreaseTimer(5.0f);
+	}
+
 	void GameOver()
 	{
 
@@ -142,8 +150,6 @@ public class FPSInputController : MonoBehaviour
 			GameOver();
 		}
 	}
-
-
 
 	void IncreaseTimer(float incrementBy) {
 		timeLeft += incrementBy;
