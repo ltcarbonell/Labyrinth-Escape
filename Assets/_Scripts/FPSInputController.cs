@@ -19,6 +19,8 @@ public class FPSInputController : MonoBehaviour
 	float timeLeft;
 	Scene currentScene;
 	bool isGameActive = false;
+	int playerLives = 5;
+	int MAXLIVES = 5;
 
 
 	private bool MFI_Connected = false;
@@ -61,6 +63,13 @@ public class FPSInputController : MonoBehaviour
 
 		Debug.Log ("Scene count " + SceneManager.sceneCount);
 		Debug.Log ("Current Scene " + currentScene.name);
+		startGameButton.GetComponentInChildren<Text>().text = ("Start "+currentScene.name);
+
+		for (int i = 0; i < playerLives; i++) {
+			Vector3 pos = new Vector3(i*40, -250, 0);
+//			Instantiate(prefab, pos, Quaternion.identity);
+		}
+
 	}
 
 	// Update is called once per frame
