@@ -4,23 +4,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
+
 // Require a character controller to be attached to the same game object
 [RequireComponent(typeof(CharacterMotor))]
 [AddComponentMenu("Character/FPS Input Controller")]
 
 public class FPSInputController : MonoBehaviour
 {
+	
 	private CharacterMotor motor;
 	public bool checkAutoWalk = false;
 	private GameObject head;
 
 	public Button startGameButton;
 	public Text timerText;
+	public Text inputText;
 	float timeLeft;
 	Scene currentScene;
 	bool isGameActive = false;
 	int playerLives = 5;
 	int MAXLIVES = 5;
+
+	public GameObject bulletPrefab;
+	public Transform bulletSpawn;
 
 
 	private bool MFI_Connected = false;
@@ -29,6 +35,7 @@ public class FPSInputController : MonoBehaviour
 		while (true)
 		{
 			string[] controllers = Input.GetJoystickNames();
+//			inputText.text = controllers [0];
 
 			if (!MFI_Connected && controllers.Length > 0)
 			{
@@ -36,7 +43,6 @@ public class FPSInputController : MonoBehaviour
 				Debug.Log("Connected");
 				GameObject.FindWithTag("CONTROL_PAD").SetActive(false);
 				GameObject.FindWithTag("CONTROL_FIRE").SetActive(false);
-
 			}
 			else if (MFI_Connected && controllers.Length == 0)
 			{
@@ -65,16 +71,18 @@ public class FPSInputController : MonoBehaviour
 		Debug.Log ("Current Scene " + currentScene.name);
 		startGameButton.GetComponentInChildren<Text>().text = ("Start "+currentScene.name);
 
-		for (int i = 0; i < playerLives; i++) {
-			Vector3 pos = new Vector3(i*40, -250, 0);
-//			Instantiate(prefab, pos, Quaternion.identity);
-		}
+//		for (int i = 0; i < playerLives; i++) {
+//			Vector3 pos = new Vector3(i*40, -250, 0);
+////			Instantiate(prefab, pos, Quaternion.identity);
+//		}
 
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
+//		string[] texts = Input.GetJoystickNames ();
+//		inputText.text = texts [0];
 		if (isGameActive) {
 			// Set forward direction toward camera
 			//		transform.eulerAngles.y = head.transform.rotation.y; 		// Get the input vector from keyboard or analog stick
@@ -106,10 +114,13 @@ public class FPSInputController : MonoBehaviour
 
 			// Apply the direction to the CharacterMotor
 			motor.inputMoveDirection = head.transform.rotation * directionVector;
-			motor.inputJump = Input.GetButton("Jump");
+			motor.inputJump = Input.GetButtonDown("Jump");
 
-			if (Input.GetButton("Fire1")) {
+//			inputText.text = 
+
+			if (Input.GetButtonDown("Fire1")) {
 				//			Debug.Log ("PRESSED!!!");
+				Fire();
 			};
 
 			RunTimer ();
@@ -164,6 +175,21 @@ public class FPSInputController : MonoBehaviour
 		timeLeft += incrementBy;
 		SetTimerText ();
 
+	}
+
+	void Fire()
+	{
+		// Create the Bullet from the Bullet Prefab
+		var bullet = (GameObject)Instantiate (
+			bulletPrefab,
+			bulletSpawn.position,
+			bulletSpawn.rotation);
+
+		// Add velocity to the bullet
+		bullet.GetComponent<Rigidbody>().velocity = bullet.transform.forward * 6;
+
+		// Destroy the bullet after 2 seconds
+		Destroy(bullet, 2.0f);
 	}
 
 }
