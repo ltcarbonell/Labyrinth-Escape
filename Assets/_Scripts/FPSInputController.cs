@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System;
 
 
 // Require a character controller to be attached to the same game object
@@ -18,16 +19,16 @@ public class FPSInputController : MonoBehaviour
 
 	public Button startGameButton;
 	public Text timerText;
-	public Text inputText;
+//	public Text inputText;
 	float timeLeft;
 	Scene currentScene;
 	bool isGameActive = false;
 	int playerLives = 5;
 	int MAXLIVES = 5;
 
-	public GameObject bulletPrefab;
-	public Transform bulletSpawn;
+	int currentLevel = 1;
 
+	GameObject[] lives;
 
 	private bool MFI_Connected = false;
 	IEnumerator CheckForControllers()
@@ -67,15 +68,13 @@ public class FPSInputController : MonoBehaviour
 			startGameButton.gameObject.SetActive (true);
 		}
 
+		lives = GameObject.FindGameObjectsWithTag ("Life");
+
+		Debug.Log ("Life count " + lives.Length);
+
 		Debug.Log ("Scene count " + SceneManager.sceneCount);
 		Debug.Log ("Current Scene " + currentScene.name);
 		startGameButton.GetComponentInChildren<Text>().text = ("Start "+currentScene.name);
-
-//		for (int i = 0; i < playerLives; i++) {
-//			Vector3 pos = new Vector3(i*40, -250, 0);
-////			Instantiate(prefab, pos, Quaternion.identity);
-//		}
-
 	}
 
 	// Update is called once per frame
@@ -120,10 +119,11 @@ public class FPSInputController : MonoBehaviour
 
 			if (Input.GetButtonDown("Fire1")) {
 				//			Debug.Log ("PRESSED!!!");
-				Fire();
+//				Fire();
 			};
 
 			RunTimer ();
+			UpdateLifeSprites ();
 		}
 
 	}
@@ -132,8 +132,12 @@ public class FPSInputController : MonoBehaviour
 	{
 		if (other.gameObject.CompareTag("TimePowerUp")){
 			other.gameObject.SetActive(false);
+			IncreaseTimer(5.0f);
+		} else if (other.gameObject.CompareTag("LevelFinish")) {
+			startNewLevel (++currentLevel);
+			other.gameObject.SetActive (false);
 		}
-		IncreaseTimer(5.0f);
+
 	}
 
 	void GameOver()
@@ -146,6 +150,11 @@ public class FPSInputController : MonoBehaviour
 		startGameButton.gameObject.SetActive (false);
 		timeLeft = 60.0f;
 		isGameActive = true;
+	}
+
+	void startNewLevel(int level) {
+		Debug.Log ("Starting level " + level);
+		LoadScene (level);
 	}
 
 	void SetTimerText()
@@ -177,19 +186,36 @@ public class FPSInputController : MonoBehaviour
 
 	}
 
-	void Fire()
-	{
-		// Create the Bullet from the Bullet Prefab
-		var bullet = (GameObject)Instantiate (
-			bulletPrefab,
-			bulletSpawn.position,
-			bulletSpawn.rotation);
-
-		// Add velocity to the bullet
-		bullet.GetComponent<Rigidbody>().velocity = bullet.transform.forward * 6;
-
-		// Destroy the bullet after 2 seconds
-		Destroy(bullet, 2.0f);
+	void UpdateLifeSprites() {
+		for (int i = 0; i < lives.Length; i++) {
+			if (i < playerLives) {
+				lives [i].SetActive (true);
+			} else {
+				lives [i].SetActive (false);
+			}
+		}
 	}
+
+	public void LoadScene (int sceneNum) {
+//		Scene nextScene = SceneManager.GetSceneByName("Level"+sceneNum);
+		SceneManager.LoadScene ("Level"+sceneNum);
+
+		StartGame ();
+	}
+
+//	void Fire()
+//	{
+//		// Create the Bullet from the Bullet Prefab
+//		var bullet = (GameObject)Instantiate (
+//			bulletPrefab,
+//			bulletSpawn.position,
+//			bulletSpawn.rotation);
+//
+//		// Add velocity to the bullet
+//		bullet.GetComponent<Rigidbody>().velocity = bullet.transform.forward * 6;
+//
+//		// Destroy the bullet after 2 seconds
+//		Destroy(bullet, 2.0f);
+//	}
 
 }
