@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System.Linq;
 using System;
 
 
@@ -17,16 +18,19 @@ public class FPSInputController : MonoBehaviour
 	public bool checkAutoWalk = false;
 	private GameObject head;
 
-	public Button startGameButton;
 	public Text timerText;
-//	public Text inputText;
+	public Text menu;
 	float timeLeft;
 	Scene currentScene;
 	bool isGameActive = false;
-	int playerLives = 5;
+	bool isGamePaused = false;
+	int playerLives;
 	int MAXLIVES = 5;
 
-	int currentLevel = 1;
+	int currentLevel;
+
+	GameObject persistentObject;
+	PersistentData persistentData;
 
 	GameObject[] lives;
 
@@ -64,17 +68,19 @@ public class FPSInputController : MonoBehaviour
 		motor = GetComponent<CharacterMotor>();
 		StartCoroutine(CheckForControllers());
 		head = GameObject.FindWithTag ("GvrHead");
-		if (!isGameActive) {
-			startGameButton.gameObject.SetActive (true);
-		}
 
-		lives = GameObject.FindGameObjectsWithTag ("Life");
+		lives = GameObject.FindGameObjectsWithTag ("Life").OrderBy( go => go.name ).ToArray();
 
-		Debug.Log ("Life count " + lives.Length);
+		persistentObject = GameObject.Find ("PersistentObject");
+		persistentData = persistentObject.GetComponent<PersistentData>();
+		this.playerLives = persistentData.playerLives;
+		this.currentLevel = persistentData.currentLevel;
 
-		Debug.Log ("Scene count " + SceneManager.sceneCount);
+		Debug.Log ("Life object count " + MAXLIVES);
+		Debug.Log ("Player Lives: " + playerLives);
 		Debug.Log ("Current Scene " + currentScene.name);
-		startGameButton.GetComponentInChildren<Text>().text = ("Start "+currentScene.name);
+		Debug.Log ("Current Level: " + currentLevel);
+
 	}
 
 	// Update is called once per frame
@@ -82,26 +88,39 @@ public class FPSInputController : MonoBehaviour
 	{
 //		string[] texts = Input.GetJoystickNames ();
 //		inputText.text = texts [0];
-		if (isGameActive) {
+		if (isGameActive && isGamePaused) {
+			Vector3 directionVector;
+			directionVector = new Vector3 (0, 0, 0);
+			motor.inputMoveDirection = head.transform.rotation * directionVector;
+			// Display pause menu
+			int timeLeftSeconds = (int)timeLeft;
+			menu.text = ("Press Start to Begin\n\n" +
+				"Current Level:" + currentLevel.ToString() + 
+				"\nTime Remaining:" + timeLeftSeconds.ToString () +
+				"\nLives:" + playerLives.ToString() );
+			menu.gameObject.SetActive (true);
+			if (Input.GetButtonDown ("Submit")) {
+				PauseUnPauseGame ();
+				Debug.Log (isGamePaused);
+			}
+		}
+		else if (isGameActive && !isGamePaused ) {
+			menu.gameObject.SetActive (false);
+
 			// Set forward direction toward camera
 			//		transform.eulerAngles.y = head.transform.rotation.y; 		// Get the input vector from keyboard or analog stick
 			//		Debug.Log(head.transform.localEulerAngles.y);
 			Vector3 directionVector;
-			if (!checkAutoWalk) {
-				directionVector = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-			} else {
-				directionVector = new Vector3(0, 0, 1);
-			}
+			directionVector = new Vector3 (Input.GetAxis ("Horizontal"), 0, Input.GetAxis ("Vertical"));
 
-			if (directionVector != Vector3.zero)
-			{
+			if (directionVector != Vector3.zero) {
 				// Get the length of the directon vector and then normalize it
 				// Dividing by the length is cheaper than normalizing when we already have the length anyway
 				float directionLength = directionVector.magnitude;
 				directionVector = directionVector / directionLength;
 
 				// Make sure the length is no bigger than 1
-				directionLength = Mathf.Min(1.0f, directionLength);
+				directionLength = Mathf.Min (1.0f, directionLength);
 
 				// Make the input vector more sensitive towards the extremes and less sensitive in the middle
 				// This makes it easier to control slow speeds when using analog sticks
@@ -113,19 +132,34 @@ public class FPSInputController : MonoBehaviour
 
 			// Apply the direction to the CharacterMotor
 			motor.inputMoveDirection = head.transform.rotation * directionVector;
-			motor.inputJump = Input.GetButtonDown("Jump");
+			motor.inputJump = Input.GetButtonDown ("Jump");
 
 //			inputText.text = 
 
-			if (Input.GetButtonDown("Fire1")) {
+			if (Input.GetButtonDown ("Fire1")) {
 				//			Debug.Log ("PRESSED!!!");
 //				Fire();
-			};
+			}
+
+			if (Input.GetButtonDown ("Submit")) {
+				PauseUnPauseGame ();
+				Debug.Log (isGamePaused);
+			}
 
 			RunTimer ();
 			UpdateLifeSprites ();
+		} else {
+			if (Input.GetButtonDown ("Submit")) {
+//				int timeLeftSeconds = (int)timeLeft;
+				menu.text = ("Press Start to Begin\n\n" 
+//					+ "Current Level:" + currentLevel.ToString() + 
+//					"\nTime Remaining:" + timeLeftSeconds.ToString () +
+//					"\nLives:" + playerLives.ToString() 
+				);
+				menu.gameObject.SetActive (true);
+				StartGame ();
+			}
 		}
-
 	}
 
 	void OnTriggerEnter(Collider other)
@@ -134,22 +168,43 @@ public class FPSInputController : MonoBehaviour
 			other.gameObject.SetActive(false);
 			IncreaseTimer(5.0f);
 		} else if (other.gameObject.CompareTag("LevelFinish")) {
-			startNewLevel (++currentLevel);
-			other.gameObject.SetActive (false);
+			if (currentLevel < 3) {
+				if (playerLives < MAXLIVES) {
+					playerLives++;
+					persistentData.playerLives = this.playerLives;
+				}
+				persistentData.currentLevel = ++currentLevel;
+				startNewLevel (persistentData.currentLevel);
+
+				other.gameObject.SetActive (false);
+			}
+			else {
+				GameOverWithResult (true);
+			}
 		}
 
 	}
 
-	void GameOver()
+	void GameOverWithResult(bool didWin)
 	{
-
+		if (didWin) {
+			// You won
+		} else {
+			// You lost
+		}
 	}
 
 	public void StartGame()
 	{
-		startGameButton.gameObject.SetActive (false);
 		timeLeft = 60.0f;
 		isGameActive = true;
+		isGamePaused = false;
+	}
+
+	public void PauseUnPauseGame()
+	{
+		isGamePaused = !isGamePaused;
+		menu.gameObject.SetActive (isGamePaused);
 	}
 
 	void startNewLevel(int level) {
@@ -172,14 +227,23 @@ public class FPSInputController : MonoBehaviour
 
 	void RunTimer ()
 	{
-		timeLeft -= Time.deltaTime;
-		SetTimerText ();
-		if(timeLeft < 0)
-		{
-			GameOver();
+		if (isGameActive && !isGamePaused) {
+			timeLeft -= Time.deltaTime;
+			SetTimerText ();
+			if (timeLeft < 0) {
+				if (playerLives > 0) {
+					playerLives--;
+					Debug.Log ("Life removed.  Number left " + playerLives);
+					persistentData.playerLives = playerLives;
+					UpdateLifeSprites ();
+					RestartLevel ();
+				} else {
+					GameOverWithResult (false);
+				}
+			}
 		}
 	}
-
+		
 	void IncreaseTimer(float incrementBy) {
 		timeLeft += incrementBy;
 		SetTimerText ();
@@ -190,6 +254,7 @@ public class FPSInputController : MonoBehaviour
 		for (int i = 0; i < lives.Length; i++) {
 			if (i < playerLives) {
 				lives [i].SetActive (true);
+				Debug.Log (i);
 			} else {
 				lives [i].SetActive (false);
 			}
@@ -197,11 +262,17 @@ public class FPSInputController : MonoBehaviour
 	}
 
 	public void LoadScene (int sceneNum) {
-//		Scene nextScene = SceneManager.GetSceneByName("Level"+sceneNum);
-		SceneManager.LoadScene ("Level"+sceneNum);
+		SceneManager.LoadScene ("Level "+sceneNum);
 
 		StartGame ();
 	}
+
+	void RestartLevel() {
+		isGameActive = false;
+		isGamePaused = false;
+		LoadScene (currentLevel);
+	}
+
 
 //	void Fire()
 //	{
