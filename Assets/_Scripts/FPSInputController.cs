@@ -24,6 +24,7 @@ public class FPSInputController : MonoBehaviour
 	Scene currentScene;
 	bool isGameActive = false;
 	bool isGamePaused = false;
+	bool levelFinished = false;
 	int playerLives;
 	int MAXLIVES = 5;
 
@@ -95,16 +96,15 @@ public class FPSInputController : MonoBehaviour
 			// Display pause menu
 			int timeLeftSeconds = (int)timeLeft;
 			menu.text = ("Press Start to Begin\n\n" +
-				"Current Level:" + currentLevel.ToString() + 
-				"\nTime Remaining:" + timeLeftSeconds.ToString () +
-				"\nLives:" + playerLives.ToString() );
+			"Current Level:" + currentLevel.ToString () +
+			"\nTime Remaining:" + timeLeftSeconds.ToString () +
+			"\nLives:" + playerLives.ToString ());
 			menu.gameObject.SetActive (true);
 			if (Input.GetButtonDown ("Submit")) {
 				PauseUnPauseGame ();
 				Debug.Log (isGamePaused);
 			}
-		}
-		else if (isGameActive && !isGamePaused ) {
+		} else if (isGameActive && !isGamePaused) {
 			menu.gameObject.SetActive (false);
 
 			// Set forward direction toward camera
@@ -149,17 +149,24 @@ public class FPSInputController : MonoBehaviour
 			RunTimer ();
 			UpdateLifeSprites ();
 		} else {
+			if (levelFinished) {
+				if (Input.GetButtonDown ("Submit")) {
+					startNewLevel (persistentData.currentLevel);
+				}
+			}
 			if (Input.GetButtonDown ("Submit")) {
-//				int timeLeftSeconds = (int)timeLeft;
+				//				int timeLeftSeconds = (int)timeLeft;
 				menu.text = ("Press Start to Begin\n\n" 
-//					+ "Current Level:" + currentLevel.ToString() + 
-//					"\nTime Remaining:" + timeLeftSeconds.ToString () +
-//					"\nLives:" + playerLives.ToString() 
+					//					+ "Current Level:" + currentLevel.ToString() + 
+					//					"\nTime Remaining:" + timeLeftSeconds.ToString () +
+					//					"\nLives:" + playerLives.ToString() 
 				);
 				menu.gameObject.SetActive (true);
 				StartGame ();
 			}
 		}
+		UpdateLifeSprites ();
+			
 	}
 
 	void OnTriggerEnter(Collider other)
@@ -173,9 +180,10 @@ public class FPSInputController : MonoBehaviour
 					playerLives++;
 					persistentData.playerLives = this.playerLives;
 				}
+				LevelFinished ();
 				persistentData.currentLevel = ++currentLevel;
-				startNewLevel (persistentData.currentLevel);
-
+				LevelFinished ();
+//				startNewLevel (persistentData.currentLevel);
 				other.gameObject.SetActive (false);
 			}
 			else {
@@ -187,10 +195,45 @@ public class FPSInputController : MonoBehaviour
 
 	void GameOverWithResult(bool didWin)
 	{
+		isGameActive = false;
+		isGamePaused = false;
 		if (didWin) {
 			// You won
+			menu.text = ("YOU WIN\n\nPress start to play again");
+			menu.gameObject.SetActive (true);
+			persistentData.playerLives = 5;
+			this.playerLives = persistentData.playerLives;
+			if (Input.GetButtonDown ("Submit")) {
+				isGameActive = true;
+				Debug.Log (playerLives);
+				startNewLevel (1);
+			}
 		} else {
 			// You lost
+			menu.text = ("Game Over\n\nPress Start to play again");
+			menu.gameObject.SetActive (true);
+			persistentData.playerLives = 5;
+			this.playerLives = persistentData.playerLives;
+			if (Input.GetButtonDown ("Submit")) {
+				isGameActive = true;
+				startNewLevel (1);
+			}
+		}
+	}
+
+	void LevelFinished() {
+		isGameActive = false;
+		isGamePaused = false;
+		levelFinished = true;
+		Vector3 directionVector;
+		directionVector = new Vector3 (0, 0, 0);
+		motor.inputMoveDirection = head.transform.rotation * directionVector;
+		this.currentLevel = persistentData.currentLevel;
+		menu.text = ("You finished level "+ (currentLevel-1).ToString() +"\n\nPress start to move to next level");
+		menu.gameObject.SetActive (true);
+		if (Input.GetButtonDown ("Submit")) {
+			Debug.Log("Level " + persistentData.currentLevel);
+			startNewLevel (persistentData.currentLevel);
 		}
 	}
 
@@ -254,7 +297,6 @@ public class FPSInputController : MonoBehaviour
 		for (int i = 0; i < lives.Length; i++) {
 			if (i < playerLives) {
 				lives [i].SetActive (true);
-				Debug.Log (i);
 			} else {
 				lives [i].SetActive (false);
 			}
