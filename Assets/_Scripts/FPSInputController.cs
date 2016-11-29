@@ -25,6 +25,7 @@ public class FPSInputController : MonoBehaviour
 	bool isGameActive = false;
 	bool isGamePaused = false;
 	bool levelFinished = false;
+	bool gameOver = false;
 	int playerLives;
 	int MAXLIVES = 5;
 
@@ -152,9 +153,22 @@ public class FPSInputController : MonoBehaviour
 			if (levelFinished) {
 				if (Input.GetButtonDown ("Submit")) {
 					startNewLevel (persistentData.currentLevel);
+					levelFinished = false;
+				}
+			} 
+
+			if (gameOver) {
+				Debug.Log ("Game over......");
+				if (Input.GetButtonDown ("Submit")) {
+					Debug.Log ("TEST 4");
+					gameOver = false;
+					levelFinished = false;
+					persistentData.currentLevel = 1;
+					startNewLevel (persistentData.currentLevel);
 				}
 			}
-			if (Input.GetButtonDown ("Submit")) {
+
+			else if (Input.GetButtonDown ("Submit")) {
 				//				int timeLeftSeconds = (int)timeLeft;
 				menu.text = ("Press Start to Begin\n\n" 
 					//					+ "Current Level:" + currentLevel.ToString() + 
@@ -164,6 +178,7 @@ public class FPSInputController : MonoBehaviour
 				menu.gameObject.SetActive (true);
 				StartGame ();
 			}
+//			Debug.Log ("TEST 4");
 		}
 		UpdateLifeSprites ();
 			
@@ -180,10 +195,8 @@ public class FPSInputController : MonoBehaviour
 					playerLives++;
 					persistentData.playerLives = this.playerLives;
 				}
-				LevelFinished ();
 				persistentData.currentLevel = ++currentLevel;
 				LevelFinished ();
-//				startNewLevel (persistentData.currentLevel);
 				other.gameObject.SetActive (false);
 			}
 			else {
@@ -197,49 +210,63 @@ public class FPSInputController : MonoBehaviour
 	{
 		isGameActive = false;
 		isGamePaused = false;
+
+		Vector3 directionVector;
+		directionVector = new Vector3 (0, 0, 0);
+		motor.inputMoveDirection = head.transform.rotation * directionVector;
+
+	
 		if (didWin) {
 			// You won
 			menu.text = ("YOU WIN\n\nPress start to play again");
 			menu.gameObject.SetActive (true);
-			persistentData.playerLives = 5;
-			this.playerLives = persistentData.playerLives;
-			if (Input.GetButtonDown ("Submit")) {
-				isGameActive = true;
-				Debug.Log (playerLives);
-				startNewLevel (1);
-			}
+			Debug.Log ("WIN");
+
 		} else {
 			// You lost
 			menu.text = ("Game Over\n\nPress Start to play again");
 			menu.gameObject.SetActive (true);
-			persistentData.playerLives = 5;
-			this.playerLives = persistentData.playerLives;
-			if (Input.GetButtonDown ("Submit")) {
-				isGameActive = true;
-				startNewLevel (1);
-			}
+			Debug.Log ("LOSE");
+
 		}
+		persistentData.currentLevel = 1;
+		this.currentLevel = persistentData.currentLevel;
+		Debug.Log ("GAME OVER" + persistentData.currentLevel);
+		levelFinished = false;
+		gameOver = true;
+
+		persistentData.playerLives = 5;
+		this.playerLives = persistentData.playerLives;
+		if (Input.GetButtonDown ("Submit")) {
+			Debug.Log ("TEST 2" + currentLevel);
+			startNewLevel (persistentData.currentLevel);
+		}
+
+
+
 	}
 
 	void LevelFinished() {
-		isGameActive = false;
-		isGamePaused = false;
-		levelFinished = true;
-		Vector3 directionVector;
-		directionVector = new Vector3 (0, 0, 0);
-		motor.inputMoveDirection = head.transform.rotation * directionVector;
-		this.currentLevel = persistentData.currentLevel;
-		menu.text = ("You finished level "+ (currentLevel-1).ToString() +"\n\nPress start to move to next level");
-		menu.gameObject.SetActive (true);
-		if (Input.GetButtonDown ("Submit")) {
-			Debug.Log("Level " + persistentData.currentLevel);
-			startNewLevel (persistentData.currentLevel);
+		if (!gameOver) {
+			isGameActive = false;
+			isGamePaused = false;
+			levelFinished = true;
+			Vector3 directionVector;
+			directionVector = new Vector3 (0, 0, 0);
+			motor.inputMoveDirection = head.transform.rotation * directionVector;
+			this.currentLevel = persistentData.currentLevel;
+			menu.text = ("You finished level " + (currentLevel - 1).ToString () + "\n\nPress start to move to next level");
+			menu.gameObject.SetActive (true);
+			if (Input.GetButtonDown ("Submit")) {
+				Debug.Log ("Level " + persistentData.currentLevel);
+				startNewLevel (persistentData.currentLevel);
+			}
 		}
 	}
 
 	public void StartGame()
 	{
-		timeLeft = 60.0f;
+		timeLeft = 5.0f;
 		isGameActive = true;
 		isGamePaused = false;
 	}
