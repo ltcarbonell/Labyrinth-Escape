@@ -20,7 +20,8 @@ public class FPSInputController : MonoBehaviour
 
 	public Text timerText;
 	public Text menu;
-	float timeLeft;
+	public Text recordMenu;
+	public float timeLeft;
 	Scene currentScene;
 	bool isGameActive = false;
 	bool isGamePaused = false;
@@ -28,11 +29,9 @@ public class FPSInputController : MonoBehaviour
 	bool gameOver = false;
 	int playerLives;
 	int MAXLIVES = 5;
+	float START_TIME = 60.0f;
 
 	int currentLevel;
-
-	GameObject persistentObject;
-	PersistentData persistentData;
 
 	GameObject[] lives;
 
@@ -66,6 +65,7 @@ public class FPSInputController : MonoBehaviour
 	// Use this for initialization
 	void Awake()
 	{
+		PersistentData.data.Load ();
 		currentScene = SceneManager.GetActiveScene ();
 		motor = GetComponent<CharacterMotor>();
 		StartCoroutine(CheckForControllers());
@@ -73,10 +73,8 @@ public class FPSInputController : MonoBehaviour
 
 		lives = GameObject.FindGameObjectsWithTag ("Life").OrderBy( go => go.name ).ToArray();
 
-		persistentObject = GameObject.Find ("PersistentObject");
-		persistentData = persistentObject.GetComponent<PersistentData>();
-		this.playerLives = persistentData.playerLives;
-		this.currentLevel = persistentData.currentLevel;
+		this.playerLives = PersistentData.data.playerLives;
+		this.currentLevel = PersistentData.data.currentLevel;
 
 		Debug.Log ("Life object count " + MAXLIVES);
 		Debug.Log ("Player Lives: " + playerLives);
@@ -152,18 +150,17 @@ public class FPSInputController : MonoBehaviour
 		} else {
 			if (levelFinished) {
 				if (Input.GetButtonDown ("Submit")) {
-					startNewLevel (persistentData.currentLevel);
+					startNewLevel (PersistentData.data.currentLevel);
 					levelFinished = false;
 				}
 			} 
 
 			if (gameOver) {
-				Debug.Log ("Game over......");
 				if (Input.GetButtonDown ("Submit")) {
 					gameOver = false;
 					levelFinished = false;
-					persistentData.currentLevel = 1;
-					startNewLevel (persistentData.currentLevel);
+					PersistentData.data.currentLevel = 1;
+					startNewLevel (PersistentData.data.currentLevel);
 				}
 			}
 
@@ -191,9 +188,9 @@ public class FPSInputController : MonoBehaviour
 			if (currentLevel < 3) {
 				if (playerLives < MAXLIVES) {
 					playerLives++;
-					persistentData.playerLives = this.playerLives;
+					PersistentData.data.playerLives = this.playerLives;
 				}
-				persistentData.currentLevel = ++currentLevel;
+				PersistentData.data.currentLevel = ++currentLevel;
 				LevelFinished ();
 				other.gameObject.SetActive (false);
 			}
@@ -213,7 +210,45 @@ public class FPSInputController : MonoBehaviour
 		directionVector = new Vector3 (0, 0, 0);
 		motor.inputMoveDirection = head.transform.rotation * directionVector;
 
-	
+		if (didWin) {
+			PersistentData.data.currentMaxLevel = PersistentData.data.currentLevel;
+		} else {
+			PersistentData.data.currentMaxLevel = PersistentData.data.currentLevel - 1;
+		}
+		PersistentData.data.currentTimeTotal += (int)timeLeft;
+		Debug.Log ("GameOver");
+		// If new max level, or new min time or new max lives
+		if (PersistentData.data.maxLevel <= PersistentData.data.currentMaxLevel) {
+			Debug.Log("Persistant Data 1");
+			if (PersistentData.data.maxLevel < PersistentData.data.currentLevel ||
+				(PersistentData.data.maxLevel == PersistentData.data.currentMaxLevel && 
+					PersistentData.data.maxLives <= PersistentData.data.playerLives)) {
+				Debug.Log("Persistant Data 2");
+				if ((PersistentData.data.maxLives < PersistentData.data.playerLives) ||
+					(PersistentData.data.currentTimeTotal <= PersistentData.data.minTimeForMaxLevel && 
+						PersistentData.data.maxLives == PersistentData.data.playerLives)) {
+					// Broke record
+					Debug.Log ("New Record");
+					PersistentData.data.maxLevel = PersistentData.data.currentMaxLevel;
+					PersistentData.data.minTimeForMaxLevel = PersistentData.data.currentTimeTotal;
+					PersistentData.data.maxLives = PersistentData.data.playerLives;
+					recordMenu.text = ("NEW RECORD\nMax Level: " + PersistentData.data.currentMaxLevel + "\nTotal Time: " + PersistentData.data.currentTimeTotal + "\nRemaining Lives: " + PersistentData.data.playerLives);
+					recordMenu.gameObject.SetActive (true);
+
+
+
+
+					PersistentData.data.currentLevel = 1;
+					PersistentData.data.playerLives = 5;
+					PersistentData.data.currentMaxLevel = 0;
+					PersistentData.data.currentTimeTotal = 0;
+					PersistentData.data.Save ();
+				}
+			}
+		}
+
+
+
 		if (didWin) {
 			// You won
 			menu.text = ("YOU WIN\n\nPress start to play again");
@@ -223,15 +258,15 @@ public class FPSInputController : MonoBehaviour
 			menu.text = ("Game Over\n\nPress Start to play again");
 			menu.gameObject.SetActive (true);
 		}
-		persistentData.currentLevel = 1;
-		this.currentLevel = persistentData.currentLevel;
+		PersistentData.data.currentLevel = 1;
+		this.currentLevel = PersistentData.data.currentLevel;
 		levelFinished = false;
 		gameOver = true;
 
-		persistentData.playerLives = 5;
-		this.playerLives = persistentData.playerLives;
+		PersistentData.data.playerLives = 5;
+		this.playerLives = PersistentData.data.playerLives;
 		if (Input.GetButtonDown ("Submit")) {
-			startNewLevel (persistentData.currentLevel);
+			startNewLevel (PersistentData.data.currentLevel);
 		}
 
 
@@ -246,18 +281,20 @@ public class FPSInputController : MonoBehaviour
 			Vector3 directionVector;
 			directionVector = new Vector3 (0, 0, 0);
 			motor.inputMoveDirection = head.transform.rotation * directionVector;
-			this.currentLevel = persistentData.currentLevel;
-			menu.text = ("You finished level " + (currentLevel - 1).ToString () + "\n\nPress start to move to next level");
+			this.currentLevel = PersistentData.data.currentLevel;
+			PersistentData.data.currentMaxLevel = PersistentData.data.currentLevel-1;
+			PersistentData.data.currentTimeTotal += (int)(60 - timeLeft);
+			menu.text = ("You finished level " + (currentLevel - 1).ToString () + " in " + (int)(60 - timeLeft) + " seconds\n\nPress start to move to next level");
 			menu.gameObject.SetActive (true);
 			if (Input.GetButtonDown ("Submit")) {
-				startNewLevel (persistentData.currentLevel);
+				startNewLevel (PersistentData.data.currentLevel);
 			}
 		}
 	}
 
 	public void StartGame()
 	{
-		timeLeft = 60.0f;
+		timeLeft = START_TIME;
 		isGameActive = true;
 		isGamePaused = false;
 	}
@@ -295,7 +332,7 @@ public class FPSInputController : MonoBehaviour
 				if (playerLives > 0) {
 					playerLives--;
 					Debug.Log ("Life removed.  Number left " + playerLives);
-					persistentData.playerLives = playerLives;
+					PersistentData.data.playerLives = playerLives;
 					UpdateLifeSprites ();
 					RestartLevel ();
 				} else {
