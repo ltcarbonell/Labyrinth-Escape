@@ -74,13 +74,15 @@ public class FPSInputController : MonoBehaviour
 
 		lives = GameObject.FindGameObjectsWithTag ("Life").OrderBy( go => go.name ).ToArray();
 
-		this.playerLives = PersistentData.data.playerLives;
-		this.currentLevel = PersistentData.data.currentLevel;
+
+		if (PersistentData.data.currentLevel == 1) {
+			PersistentData.data.currentTimeTotal = 0;
+		}
 
 		Debug.Log ("Life object count " + MAXLIVES);
-		Debug.Log ("Player Lives: " + playerLives);
+		Debug.Log ("Player Lives: " + PersistentData.data.playerLives);
 		Debug.Log ("Current Scene " + currentScene.name);
-		Debug.Log ("Current Level: " + currentLevel);
+		Debug.Log ("Current Level: " + PersistentData.data.currentLevel);
 
 	}
 
@@ -96,9 +98,9 @@ public class FPSInputController : MonoBehaviour
 			// Display pause menu
 			int timeLeftSeconds = (int)timeLeft;
 			menu.text = ("Press Start to Begin\n\n" +
-			"Current Level:" + currentLevel.ToString () +
+				"Current Level:" + PersistentData.data.currentLevel.ToString () +
 			"\nTime Remaining:" + timeLeftSeconds.ToString () +
-			"\nLives:" + playerLives.ToString ());
+				"\nLives:" + PersistentData.data.playerLives.ToString ());
 			menu.gameObject.SetActive (true);
 			if (Input.GetButtonDown ("Submit")) {
 				PauseUnPauseGame ();
@@ -161,6 +163,7 @@ public class FPSInputController : MonoBehaviour
 					gameOver = false;
 					levelFinished = false;
 					PersistentData.data.currentLevel = 1;
+					PersistentData.data.playerLives = 3;
 					startNewLevel (PersistentData.data.currentLevel);
 				}
 			}
@@ -236,11 +239,8 @@ public class FPSInputController : MonoBehaviour
 					recordMenu.text = ("NEW RECORD\nMax Level: " + PersistentData.data.currentMaxLevel + "\nTotal Time: " + PersistentData.data.currentTimeTotal + "\nRemaining Lives: " + PersistentData.data.playerLives);
 					recordMenu.gameObject.SetActive (true);
 
-
-
-
 					PersistentData.data.currentLevel = 1;
-					PersistentData.data.playerLives = 5;
+					PersistentData.data.playerLives = 3;
 					PersistentData.data.currentMaxLevel = 0;
 					PersistentData.data.currentTimeTotal = 0;
 					PersistentData.data.Save ();
@@ -260,12 +260,10 @@ public class FPSInputController : MonoBehaviour
 			menu.gameObject.SetActive (true);
 		}
 		PersistentData.data.currentLevel = 1;
-		this.currentLevel = PersistentData.data.currentLevel;
 		levelFinished = false;
 		gameOver = true;
 
-		PersistentData.data.playerLives = 5;
-		this.playerLives = PersistentData.data.playerLives;
+		PersistentData.data.playerLives = 3;
 		if (Input.GetButtonDown ("Submit")) {
 			startNewLevel (PersistentData.data.currentLevel);
 		}
@@ -282,11 +280,11 @@ public class FPSInputController : MonoBehaviour
 			Vector3 directionVector;
 			directionVector = new Vector3 (0, 0, 0);
 			motor.inputMoveDirection = head.transform.rotation * directionVector;
-			this.currentLevel = PersistentData.data.currentLevel;
 			PersistentData.data.currentMaxLevel = PersistentData.data.currentLevel-1;
 			PersistentData.data.currentTimeTotal += (int)(60 - timeLeft);
-			menu.text = ("You finished level " + (currentLevel - 1).ToString () + " in " + (int)(60 - timeLeft) + " seconds\n\nPress start to move to next level");
+			menu.text = ("You finished level " + (PersistentData.data.currentLevel - 1).ToString () + " in " + (int)(60 - timeLeft) + " seconds\n\nPress start to move to next level");
 			menu.gameObject.SetActive (true);
+			PersistentData.data.Save ();
 			if (Input.GetButtonDown ("Submit")) {
 				startNewLevel (PersistentData.data.currentLevel);
 			}
@@ -330,10 +328,9 @@ public class FPSInputController : MonoBehaviour
 			timeLeft -= Time.deltaTime;
 			SetTimerText ();
 			if (timeLeft < 0) {
-				if (playerLives > 0) {
-					playerLives--;
-					Debug.Log ("Life removed.  Number left " + playerLives);
-					PersistentData.data.playerLives = playerLives;
+				if (PersistentData.data.playerLives > 0) {
+					PersistentData.data.playerLives--;
+					Debug.Log ("Life removed.  Number left " + PersistentData.data.playerLives);
 					UpdateLifeSprites ();
 					RestartLevel ();
 				} else {
@@ -350,8 +347,9 @@ public class FPSInputController : MonoBehaviour
 	}
 
 	void UpdateLifeSprites() {
+		Debug.Log ("Updating " + PersistentData.data.playerLives);
 		for (int i = 0; i < lives.Length; i++) {
-			if (i < playerLives) {
+			if (i < PersistentData.data.playerLives) {
 				lives [i].SetActive (true);
 			} else {
 				lives [i].SetActive (false);
@@ -368,7 +366,7 @@ public class FPSInputController : MonoBehaviour
 	void RestartLevel() {
 		isGameActive = false;
 		isGamePaused = false;
-		LoadScene (currentLevel);
+		LoadScene (PersistentData.data.currentLevel);
 	}
 
 

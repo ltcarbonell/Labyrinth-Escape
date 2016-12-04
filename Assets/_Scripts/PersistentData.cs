@@ -21,6 +21,7 @@ public class PersistentData : MonoBehaviour {
 		if (data == null) {
 			DontDestroyOnLoad (gameObject);
 			data = this;
+//			data.Load ();
 		} else if (data != this) {
 			Destroy (gameObject);
 		}
@@ -41,8 +42,6 @@ public class PersistentData : MonoBehaviour {
 		newData.maxLives = maxLives;
 
 		Debug.Log ("Saved");
-
-		 
 
 		bf.Serialize (file, newData);
 		file.Close ();
