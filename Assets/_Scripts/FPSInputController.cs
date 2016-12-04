@@ -27,13 +27,13 @@ public class FPSInputController : MonoBehaviour
 	bool isGamePaused = false;
 	bool levelFinished = false;
 	bool gameOver = false;
-	int playerLives;
 	int MAXLIVES = 5;
 	float START_TIME = 60.0f;
 
-	int currentLevel;
-
 	GameObject[] lives;
+
+	public AudioClip impact;
+	AudioSource audio;
 
 	private bool MFI_Connected = false;
 	IEnumerator CheckForControllers()
@@ -63,9 +63,10 @@ public class FPSInputController : MonoBehaviour
 	}
 
 	// Use this for initialization
-	void Awake()
+	void Start()
 	{
 		PersistentData.data.Load ();
+		audio = GetComponent<AudioSource>();
 		currentScene = SceneManager.GetActiveScene ();
 		motor = GetComponent<CharacterMotor>();
 		StartCoroutine(CheckForControllers());
@@ -183,14 +184,14 @@ public class FPSInputController : MonoBehaviour
 	{
 		if (other.gameObject.CompareTag("TimePowerUp")){
 			other.gameObject.SetActive(false);
+			audio.PlayOneShot(impact, 0.7F);
 			IncreaseTimer(5.0f);
 		} else if (other.gameObject.CompareTag("LevelFinish")) {
-			if (currentLevel < 3) {
-				if (playerLives < MAXLIVES) {
-					playerLives++;
-					PersistentData.data.playerLives = this.playerLives;
+			if (PersistentData.data.currentLevel < 3) {
+				if (PersistentData.data.playerLives < MAXLIVES) {
+					++PersistentData.data.playerLives;
 				}
-				PersistentData.data.currentLevel = ++currentLevel;
+				++PersistentData.data.currentLevel;
 				LevelFinished ();
 				other.gameObject.SetActive (false);
 			}
